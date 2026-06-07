@@ -66,22 +66,37 @@ The app is deployed to GitHub Pages at:
 
 ## Deploying
 
-A GitHub Actions workflow (`.github/workflows/deploy.yml`) builds and deploys
-to GitHub Pages on every push to `main`.
+**Live deployment:** https://chinmaykodag.github.io/habit-tracker/
 
-**One-time setup** (after creating the repo on GitHub):
+The current production deploy uses a `gh-pages` branch (built locally,
+committed to the branch, pushed). To redeploy after changes:
 
-1. Create the empty repo on GitHub (no README/license/.gitignore — they
-   already exist locally).
-2. Push: `git push -u origin main` (remote is already configured to
-   `https://github.com/chinmaykodag/habit-tracker.git`).
-3. The workflow runs automatically. The `actions/configure-pages` step
-   auto-enables Pages with "GitHub Actions" as the source on first
-   run, so no manual settings toggle is needed.
-4. Watch progress in the **Actions** tab. After ~1 minute the site goes
-   live at `https://chinmaykodag.github.io/habit-tracker/`.
+```bash
+npm run deploy
+```
 
-**Forking / deploying under a different repo name**
+(See `deploy:gh-pages` script in `package.json`.)
+
+### Switching to auto-deploy on push (recommended for the long term)
+
+A GitHub Actions workflow at `.github/workflows/deploy.yml` is already
+prepared and committed locally (but kept out of the initial automated push
+because the Copilot CLI's OAuth token didn't carry the `workflow` scope).
+
+To activate it:
+
+1. Push the workflow file with your own credentials:
+   ```bash
+   git add .github/workflows/deploy.yml
+   git commit -m "ci: enable Pages deploy workflow"
+   git push
+   ```
+2. Go to **Settings → Pages** in the GitHub repo and change the source
+   from "Deploy from a branch" to **"GitHub Actions"**.
+3. From then on, every push to `main` rebuilds and redeploys automatically;
+   the `gh-pages` branch can be deleted.
+
+### Forking or deploying under a different repo name
 
 The production base path is set once in `vite.config.js`:
 

@@ -7,7 +7,8 @@
     "dev": "vite",
     "build": "vite build",
     "preview": "vite preview",
-    "generate:icons": "node scripts/generate-icons.mjs"
+    "generate:icons": "node scripts/generate-icons.mjs",
+    "deploy": "node scripts/deploy.mjs"
   },
   "devDependencies": {
     "@resvg/resvg-js": "^2.6.2",
