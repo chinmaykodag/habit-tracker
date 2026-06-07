@@ -11,6 +11,7 @@
     frequencyLabel,
     weeklyCount,
     weeklyTargetMet,
+    habitColor,
   } from '../lib/habits.js';
   import Heatmap from '../components/Heatmap.svelte';
   import Modal from '../components/Modal.svelte';
@@ -105,12 +106,16 @@
     <a class="btn" href="#/habits">Back to habits</a>
   </div>
 {:else}
-  <header class="header" style="--habit-accent: {habit.color}">
-    <a class="back" href="#/habits" aria-label="Back">‹</a>
+  <header class="header" style="--habit-accent: {habitColor(habit)}">
+    <a class="back" href="#/habits" aria-label="Back">
+      <svg viewBox="0 0 24 24" width="20" height="20" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+        <path d="M15 18l-6-6 6-6"/>
+      </svg>
+    </a>
     <button class="edit btn btn-ghost" on:click={() => (editing = true)}>Edit</button>
   </header>
 
-  <div class="title" style="--habit-accent: {habit.color}">
+  <div class="title" style="--habit-accent: {habitColor(habit)}">
     <div class="swatch">
       {#if habit.icon}<span>{habit.icon}</span>{/if}
     </div>
@@ -140,7 +145,7 @@
         <span class="weekly-value">{weekly.count} / {weekly.target}</span>
       </div>
       <div class="bar">
-        <div class="fill" style="width: {Math.min(100, (weekly.count / weekly.target) * 100)}%; background: {habit.color}"></div>
+        <div class="fill" style="width: {Math.min(100, (weekly.count / weekly.target) * 100)}%; background: {habitColor(habit)}"></div>
       </div>
       {#if weekly.met}
         <span class="weekly-met">🎉 Target met</span>
@@ -175,7 +180,7 @@
     <h2 class="section-title">Last 7 days</h2>
     <div class="seven">
       {#each lastSeven as d}
-        <div class="seven-day" style="--habit-accent: {habit.color}">
+        <div class="seven-day" style="--habit-accent: {habitColor(habit)}">
           <span class="seven-label">{d.label}</span>
           <span class="seven-dot" class:done={d.done}></span>
         </div>
@@ -232,11 +237,8 @@
     display: inline-flex;
     align-items: center;
     justify-content: center;
-    font-size: 26px;
-    line-height: 1;
     text-decoration: none;
     color: var(--fg);
-    font-weight: 300;
   }
 
   .edit {

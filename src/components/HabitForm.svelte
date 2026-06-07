@@ -20,7 +20,9 @@
   ];
 
   let name = habit?.name ?? '';
-  let color = habit?.color ?? palette[0];
+  // null = "use the app accent". User can pick an explicit color from the
+  // palette to override.
+  let color = habit ? (habit.color ?? null) : null;
   let icon = habit?.icon ?? '';
   let categoryId = habit?.categoryId ?? null;
   let freqType = habit?.frequency?.type ?? 'daily';
@@ -135,6 +137,15 @@
   <div class="field">
     <span class="label">Color</span>
     <div class="palette">
+      <button
+        type="button"
+        class="swatch swatch-accent"
+        class:active={color == null}
+        aria-label="Match accent theme"
+        on:click={() => (color = null)}
+      >
+        <span class="auto-dot"></span>
+      </button>
       {#each palette as c}
         <button
           type="button"
@@ -146,6 +157,9 @@
         ></button>
       {/each}
     </div>
+    {#if color == null}
+      <span class="hint">Matches your selected app accent.</span>
+    {/if}
   </div>
 
   <div class="field">
@@ -253,6 +267,32 @@
   .swatch.active {
     border-color: var(--fg);
     box-shadow: 0 0 0 2px var(--bg-elevated);
+  }
+
+  .swatch-accent {
+    background: var(--bg-soft);
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+  }
+
+  .auto-dot {
+    width: 14px;
+    height: 14px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 0 2px var(--bg-soft);
+  }
+
+  .swatch-accent.active {
+    border-color: var(--accent);
+    box-shadow: 0 0 0 2px var(--bg-elevated);
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--fg-muted);
+    margin-top: 2px;
   }
 
   .emoji-row {

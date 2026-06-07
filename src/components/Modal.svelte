@@ -33,7 +33,11 @@
     {#if title}
       <header class="head">
         <h2>{title}</h2>
-        <button class="close" on:click={close} aria-label="Close">✕</button>
+        <button class="close" on:click={close} aria-label="Close">
+          <svg viewBox="0 0 24 24" width="14" height="14" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+            <path d="M6 6l12 12M18 6L6 18"/>
+          </svg>
+        </button>
       </header>
     {/if}
     <div class="body">
@@ -94,7 +98,10 @@
     background: var(--bg-soft);
     border: none;
     color: var(--fg-muted);
-    font-size: 16px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    padding: 0;
   }
 
   .body {

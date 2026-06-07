@@ -22,6 +22,7 @@ export const DEFAULT_STATE = {
   completions: {},
   settings: {
     theme: 'system',
+    accent: 'sage',
     weekStartsOn: 1, // 0 = Sunday, 1 = Monday
     statsOrder: [...DEFAULT_STATS_ORDER],
   },

@@ -18,6 +18,7 @@
     weeklyTargetMet,
     weeklyCount,
     frequencyLabel,
+    habitColor,
   } from '../lib/habits.js';
 
   // ── Section ordering / edit mode ────────────────────────────────────────
@@ -482,7 +483,7 @@
             <h2 class="section-title">Top habits — last 30 days</h2>
             <div class="lb card-surface">
               {#each topThree as r, i (r.h.id)}
-                <div class="lb-row" style="--lb-accent: {r.h.color}">
+                <div class="lb-row" style="--lb-accent: {habitColor(r.h)}">
                   <span class="lb-rank">{i + 1}</span>
                   <div class="lb-text">
                     <a class="lb-name" href={`#/habits/${r.h.id}`}>
@@ -492,7 +493,7 @@
                   </div>
                   <div class="lb-spark" aria-hidden="true">
                     {#each r.spark as v, j}
-                      <span class="lb-spark-bar" style="height: {Math.max(8, (v / 7) * 100)}%; background: {r.h.color}"></span>
+                      <span class="lb-spark-bar" style="height: {Math.max(8, (v / 7) * 100)}%; background: {habitColor(r.h)}"></span>
                     {/each}
                   </div>
                   <span class="lb-rate">{pct(r.rate)}</span>
@@ -504,7 +505,7 @@
               <h2 class="section-title needs">Needs attention</h2>
               <div class="lb card-surface lb-needs">
                 {#each needsAttention as r (r.h.id)}
-                  <div class="lb-row" style="--lb-accent: {r.h.color}">
+                  <div class="lb-row" style="--lb-accent: {habitColor(r.h)}">
                     <span class="lb-warn" aria-hidden="true">⚠</span>
                     <div class="lb-text">
                       <a class="lb-name" href={`#/habits/${r.h.id}`}>
@@ -514,7 +515,7 @@
                     </div>
                     <div class="lb-spark" aria-hidden="true">
                       {#each r.spark as v}
-                        <span class="lb-spark-bar" style="height: {Math.max(8, (v / 7) * 100)}%; background: {r.h.color}"></span>
+                        <span class="lb-spark-bar" style="height: {Math.max(8, (v / 7) * 100)}%; background: {habitColor(r.h)}"></span>
                       {/each}
                     </div>
                     <span class="lb-rate">{pct(r.rate)}</span>

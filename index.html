@@ -5,9 +5,10 @@
     <link rel="icon" type="image/svg+xml" href="/favicon.svg" />
     <meta name="viewport" content="width=device-width, initial-scale=1.0, viewport-fit=cover, user-scalable=no" />
 
-    <!-- PWA / theming -->
-    <meta name="theme-color" content="#0f172a" media="(prefers-color-scheme: dark)" />
-    <meta name="theme-color" content="#ffffff" media="(prefers-color-scheme: light)" />
+    <!-- Browser chrome / status bar tint. The actual color is set
+         dynamically by App.svelte based on the chosen accent. We seed
+         a sage-tinted default so first paint isn't jarring. -->
+    <meta name="theme-color" content="#6f9577" />
 
     <!-- iOS PWA support -->
     <meta name="mobile-web-app-capable" content="yes" />

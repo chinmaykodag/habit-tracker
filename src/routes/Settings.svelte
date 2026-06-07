@@ -8,8 +8,35 @@
   let fileInput;
   let importMessage = '';
 
+  const ACCENTS = [
+    { id: 'sage',    label: 'Sage',    swatch: '#6f9577' },
+    { id: 'indigo',  label: 'Indigo',  swatch: '#6366f1' },
+    { id: 'emerald', label: 'Emerald', swatch: '#10b981' },
+    { id: 'sunset',  label: 'Sunset',  swatch: '#f97316' },
+    { id: 'rose',    label: 'Rose',    swatch: '#e11d48' },
+    { id: 'sky',     label: 'Sky',     swatch: '#0284c7' },
+  ];
+
   function setTheme(theme) {
     state.update((s) => ({ ...s, settings: { ...s.settings, theme } }));
+  }
+
+  function setAccent(accent) {
+    state.update((s) => ({ ...s, settings: { ...s.settings, accent } }));
+  }
+
+  function applyAccentToAllHabits() {
+    const colored = $state.habits.filter((h) => h.color != null);
+    if (colored.length === 0) {
+      importMessage = 'All habits already match the accent.';
+      return;
+    }
+    if (!confirm(`Set all ${colored.length} habits to match the app accent? (Each habit's individual color will be cleared.)`)) return;
+    state.update((s) => ({
+      ...s,
+      habits: s.habits.map((h) => ({ ...h, color: null })),
+    }));
+    importMessage = `Updated ${colored.length} ${colored.length === 1 ? 'habit' : 'habits'} to match accent.`;
   }
 
   function setWeekStart(value) {
@@ -152,12 +179,34 @@
 <section class="block">
   <h2 class="section-title">Appearance</h2>
   <div class="card-surface card">
+    <span class="label">Accent</span>
+    <div class="accent-grid">
+      {#each ACCENTS as a (a.id)}
+        <button
+          type="button"
+          class="accent-pick"
+          class:active={($state.settings.accent ?? 'sage') === a.id}
+          on:click={() => setAccent(a.id)}
+          aria-label={a.label}
+          aria-pressed={($state.settings.accent ?? 'sage') === a.id}
+        >
+          <span class="accent-swatch" style="background: {a.swatch}"></span>
+          <span class="accent-label">{a.label}</span>
+        </button>
+      {/each}
+    </div>
+    <button class="btn-link" type="button" on:click={applyAccentToAllHabits}>
+      Apply accent to all habits
+    </button>
+  </div>
+  <div class="card-surface card">
     <span class="label">Theme</span>
     <div class="seg">
       <button class="seg-btn" class:active={$state.settings.theme === 'light'} on:click={() => setTheme('light')}>Light</button>
       <button class="seg-btn" class:active={$state.settings.theme === 'dark'} on:click={() => setTheme('dark')}>Dark</button>
       <button class="seg-btn" class:active={$state.settings.theme === 'system'} on:click={() => setTheme('system')}>System</button>
     </div>
+    <span class="hint">Dark mode uses a pure-black background for OLED screens.</span>
   </div>
   <div class="card-surface card">
     <span class="label">Week starts on</span>
@@ -241,10 +290,81 @@
     gap: 8px;
   }
 
+  .btn-link {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 6px 8px;
+    cursor: pointer;
+    align-self: flex-start;
+    margin-top: 4px;
+  }
+
+  .btn-link:active {
+    opacity: 0.6;
+  }
+
   .label {
     font-size: 13px;
     font-weight: 600;
     color: var(--fg-muted);
+  }
+
+  .hint {
+    font-size: 12px;
+    color: var(--fg-muted);
+    margin-top: 4px;
+  }
+
+  .accent-grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 8px;
+  }
+
+  @media (min-width: 480px) {
+    .accent-grid {
+      grid-template-columns: repeat(6, 1fr);
+    }
+  }
+
+  .accent-pick {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    padding: 10px 4px;
+    background: transparent;
+    border: 1px solid transparent;
+    border-radius: var(--radius-sm);
+    font-size: 12px;
+    color: var(--fg-muted);
+    font-weight: 600;
+    cursor: pointer;
+  }
+
+  .accent-pick.active {
+    border-color: var(--accent);
+    background: color-mix(in srgb, var(--accent) 10%, transparent);
+    color: var(--fg);
+  }
+
+  .accent-swatch {
+    width: 36px;
+    height: 36px;
+    border-radius: 50%;
+    border: 2px solid transparent;
+    box-shadow: 0 0 0 1px var(--border);
+  }
+
+  .accent-pick.active .accent-swatch {
+    box-shadow: 0 0 0 2px var(--accent);
+  }
+
+  .accent-label {
+    line-height: 1;
   }
 
   .seg {

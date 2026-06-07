@@ -24,7 +24,13 @@ on your device in LocalStorage.
   page, then drag the ⋮⋮ handles to reorder sections; "Reset to default"
   restores the original layout. Order persists across reloads and is
   included in the JSON export
-- **Light / dark / system** theme (follows iOS system preference by default)
+- **Six accent themes** — Sage (default), Indigo, Emerald, Sunset, Rose, Sky.
+  Pick from Settings → Appearance → Accent. Tinted heatmap palette + iOS
+  status-bar tint update automatically. Habits without an explicit color
+  inherit the chosen accent.
+- **Light / dark / system** theme — dark mode uses a **pure-black background
+  for OLED screens** (saves battery on iPhone). Follows iOS system
+  preference by default.
 - **Export** — full backup as JSON (all habits, history, categories,
   settings, layout); habit history as CSV (one row per check-in, opens
   cleanly in Excel/Sheets)

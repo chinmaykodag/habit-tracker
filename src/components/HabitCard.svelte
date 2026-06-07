@@ -1,5 +1,6 @@
 <script>
   import { createEventDispatcher } from 'svelte';
+  import { habitColor } from '../lib/habits.js';
   export let habit;
   export let completed = false;
   export let streak = 0;
@@ -14,7 +15,7 @@
   }
 </script>
 
-<div class="card" style="--habit-accent: {habit.color || 'var(--accent)'}">
+<div class="card" style="--habit-accent: {habitColor(habit)}">
   <a class="info" href={`#/habits/${habit.id}`}>
     <div class="swatch" aria-hidden="true">
       {#if habit.icon}<span>{habit.icon}</span>{/if}

@@ -1,7 +1,7 @@
 <script>
   import { onMount, tick } from 'svelte';
   import { today, toISODate, addDays, fromISODate, weekKey } from '../lib/date.js';
-  import { isScheduledOn } from '../lib/habits.js';
+  import { isScheduledOn, habitColor } from '../lib/habits.js';
 
   export let habit;
   export let completions = [];
@@ -78,7 +78,7 @@
   }
 </script>
 
-<div class="heatmap" style="--habit-accent: {habit.color || 'var(--accent)'}" bind:this={scroller}>
+<div class="heatmap" style="--habit-accent: {habitColor(habit)}" bind:this={scroller}>
   <div class="months">
     {#each monthLabels as m (m.col + m.label)}
       <span class="month" style="grid-column: {m.col + 2} / span 1">{m.label}</span>

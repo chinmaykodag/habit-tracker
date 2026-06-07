@@ -1,7 +1,7 @@
 <script>
   import { state } from '../lib/stores.js';
   import { newId } from '../lib/storage.js';
-  import { frequencyLabel, currentStreak } from '../lib/habits.js';
+  import { frequencyLabel, currentStreak, habitColor } from '../lib/habits.js';
   import Modal from '../components/Modal.svelte';
   import HabitForm from '../components/HabitForm.svelte';
 
@@ -62,7 +62,11 @@
 
 <header class="header">
   <h1>Habits</h1>
-  <button class="add" on:click={() => (creating = true)} aria-label="Add habit">+</button>
+  <button class="add" on:click={() => (creating = true)} aria-label="Add habit">
+    <svg viewBox="0 0 24 24" width="22" height="22" fill="none" stroke="currentColor" stroke-width="2.5" stroke-linecap="round" stroke-linejoin="round">
+      <path d="M12 5v14M5 12h14"/>
+    </svg>
+  </button>
 </header>
 
 <section class="content">
@@ -77,7 +81,7 @@
         <div class="list">
           {#each bucket.items as habit (habit.id)}
             {@const streak = currentStreak(habit, $state.completions, weekStartsOn)}
-            <a class="row" href={`#/habits/${habit.id}`} style="--habit-accent: {habit.color}">
+            <a class="row" href={`#/habits/${habit.id}`} style="--habit-accent: {habitColor(habit)}">
               <div class="swatch" aria-hidden="true">
                 {#if habit.icon}<span>{habit.icon}</span>{/if}
               </div>
@@ -85,7 +89,11 @@
                 <div class="name">{habit.name}</div>
                 <div class="meta">{frequencyLabel(habit)}{streak > 0 ? ` · 🔥 ${streak}` : ''}</div>
               </div>
-              <span class="chev" aria-hidden="true">›</span>
+              <span class="chev" aria-hidden="true">
+              <svg viewBox="0 0 24 24" width="18" height="18" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                <path d="M9 18l6-6-6-6"/>
+              </svg>
+            </span>
             </a>
           {/each}
         </div>
@@ -124,9 +132,6 @@
     background: var(--accent);
     color: var(--accent-fg);
     border: none;
-    font-size: 26px;
-    font-weight: 300;
-    line-height: 1;
     display: flex;
     align-items: center;
     justify-content: center;
@@ -212,6 +217,8 @@
 
   .chev {
     color: var(--fg-muted);
-    font-size: 20px;
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
   }
 </style>

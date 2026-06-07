@@ -230,6 +230,13 @@ export function frequencyLabel(habit) {
   return '';
 }
 
+// Color to use for a habit's chrome (check circle, swatch, heatmap, etc.).
+// When the user hasn't picked a specific color, we return the CSS variable
+// reference so the habit follows the app's chosen accent theme.
+export function habitColor(habit) {
+  return habit?.color || 'var(--accent)';
+}
+
 // ─────────────────────────────────────────────────────────────────────────────
 // Aggregate helpers — operate across all habits, used by the Stats page.
 // ─────────────────────────────────────────────────────────────────────────────
