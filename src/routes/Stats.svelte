@@ -1,6 +1,9 @@
 <script>
   import { state } from '../lib/stores.js';
+  import { DEFAULT_STATS_ORDER } from '../lib/storage.js';
   import { today, toISODate, addDays, fromISODate, weekKey } from '../lib/date.js';
+  import { dndzone } from 'svelte-dnd-action';
+  import { flip } from 'svelte/animate';
   import {
     isScheduledOn,
     periodCompletionRate,
@@ -16,6 +19,68 @@
     weeklyCount,
     frequencyLabel,
   } from '../lib/habits.js';
+
+  // ── Section ordering / edit mode ────────────────────────────────────────
+  const SECTION_LABELS = {
+    hero: 'Highlights',
+    insights: 'Insights',
+    annual: 'Year at a glance',
+    weekly: 'Weekly check-ins',
+    dow: 'By day of week',
+    leaderboard: 'Habit leaderboard',
+    records: 'Records',
+    categories: 'By category',
+  };
+
+  let editMode = false;
+
+  // Resolve user-saved order against the canonical list: drop unknown ids,
+  // append any default ids the user hasn't seen (forward compat).
+  function resolveOrder(saved) {
+    const valid = new Set(DEFAULT_STATS_ORDER);
+    const seen = new Set();
+    const resolved = [];
+    for (const id of saved ?? []) {
+      if (valid.has(id) && !seen.has(id)) {
+        resolved.push(id);
+        seen.add(id);
+      }
+    }
+    for (const id of DEFAULT_STATS_ORDER) {
+      if (!seen.has(id)) resolved.push(id);
+    }
+    return resolved;
+  }
+
+  // The dndzone needs objects with stable `id` props, not plain strings.
+  $: sections = resolveOrder($state.settings.statsOrder).map((id) => ({
+    id,
+    label: SECTION_LABELS[id] ?? id,
+  }));
+
+  const flipDurationMs = 180;
+
+  function handleDndConsider(e) {
+    sections = e.detail.items;
+  }
+
+  function handleDndFinalize(e) {
+    sections = e.detail.items;
+    const order = sections.map((s) => s.id);
+    state.update((s) => ({
+      ...s,
+      settings: { ...s.settings, statsOrder: order },
+    }));
+  }
+
+  function resetOrder() {
+    state.update((s) => ({
+      ...s,
+      settings: { ...s.settings, statsOrder: [...DEFAULT_STATS_ORDER] },
+    }));
+  }
+
+  // ────────────────────────────────────────────────────────────────────────
 
   $: weekStartsOn = $state.settings.weekStartsOn;
   $: activeHabits = $state.habits.filter((h) => !h.archivedAt);
@@ -230,8 +295,25 @@
 </script>
 
 <header class="header">
-  <h1>Stats</h1>
-  <p class="muted">How you've been doing</p>
+  <div>
+    <h1>Stats</h1>
+    <p class="muted">How you've been doing</p>
+  </div>
+  {#if activeHabits.length > 0}
+    <button
+      class="edit-toggle"
+      class:active={editMode}
+      on:click={() => (editMode = !editMode)}
+      aria-pressed={editMode}
+    >
+      {#if editMode}
+        Done
+      {:else}
+        <svg viewBox="0 0 24 24" width="16" height="16" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"/><path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"/></svg>
+        Edit
+      {/if}
+    </button>
+  {/if}
 </header>
 
 {#if activeHabits.length === 0}
@@ -240,241 +322,275 @@
     <a class="btn btn-primary" href="#/habits">Add a habit</a>
   </div>
 {:else}
-  <!-- Hero row: 30d rate with trend + perfect days -->
-  <section class="hero">
-    <div class="big card-surface">
-      <span class="big-label">Last 30 days</span>
-      <span class="big-value">{pct(rate30)}</span>
-      <span class="big-sub">
-        overall completion
-        {#if trend30 !== null && trend30 !== 0}
-          <span class="trend" class:up={trend30 > 0} class:down={trend30 < 0}>
-            {trend30 > 0 ? '▲' : '▼'} {Math.abs(trend30)} pts
-          </span>
-        {/if}
-      </span>
+  {#if editMode}
+    <div class="edit-banner">
+      <span>Drag the <span class="grip">⋮⋮</span> handle to reorder.</span>
+      <button class="btn-link" on:click={resetOrder}>Reset to default</button>
     </div>
-    <div class="big card-surface">
-      <span class="big-label">Perfect days</span>
-      <span class="big-value">{perfectThisMonth}</span>
-      <span class="big-sub">
-        this month
-        {#if perfectStreak > 0}
-          <span class="trend up">🔥 {perfectStreak}-day streak</span>
-        {/if}
-      </span>
-    </div>
-  </section>
-
-  <!-- Smart insights -->
-  {#if insights.length > 0}
-    <section class="block">
-      <h2 class="section-title">Insights</h2>
-      <div class="insights">
-        {#each insights as i}
-          <div class="insight card-surface">
-            <span class="insight-icon" aria-hidden="true">💡</span>
-            <p>{@html renderInsight(i.text)}</p>
-          </div>
-        {/each}
-      </div>
-    </section>
   {/if}
 
-  <!-- Annual heatmap -->
-  <section class="block">
-    <h2 class="section-title">Year at a glance</h2>
-    <div class="card-surface annual-card">
-      <div class="annual-scroll">
-        <div class="annual-months">
-          {#each annualMonths as m (m.col + m.label)}
-            <span class="annual-month" style="grid-column: {m.col + 2} / span 1">{m.label}</span>
-          {/each}
-        </div>
-        <div class="annual-body">
-          <div class="annual-day-labels">
-            {#each annualDowLabels as l, i}
-              <span class:hidden={i % 2 === 0}>{l}</span>
-            {/each}
+  <div
+    class="stats-zone"
+    class:editing={editMode}
+    use:dndzone={{
+      items: sections,
+      flipDurationMs,
+      dragDisabled: !editMode,
+      dropTargetStyle: {},
+      type: 'stats-section',
+    }}
+    on:consider={handleDndConsider}
+    on:finalize={handleDndFinalize}
+  >
+    {#each sections as section (section.id)}
+      <div class="stats-section" animate:flip={{ duration: flipDurationMs }}>
+        {#if editMode}
+          <div class="drag-handle" aria-label="Drag to reorder">
+            <span class="grip" aria-hidden="true">⋮⋮</span>
+            <span class="drag-label">{section.label}</span>
           </div>
-          <div class="annual-grid" style="grid-template-columns: repeat({annualGrid.length}, 11px)">
-            {#each annualGrid as col, ci}
-              <div class="annual-col">
-                {#each col as cell}
-                  <div
-                    class="annual-cell level-{cell.future ? 'future' : cell.level}"
-                    title={annualTooltip(cell)}
-                    aria-label={annualTooltip(cell)}
-                  ></div>
+        {/if}
+
+        {#if section.id === 'hero'}
+          <section class="hero">
+            <div class="big card-surface">
+              <span class="big-label">Last 30 days</span>
+              <span class="big-value">{pct(rate30)}</span>
+              <span class="big-sub">
+                overall completion
+                {#if trend30 !== null && trend30 !== 0}
+                  <span class="trend" class:up={trend30 > 0} class:down={trend30 < 0}>
+                    {trend30 > 0 ? '▲' : '▼'} {Math.abs(trend30)} pts
+                  </span>
+                {/if}
+              </span>
+            </div>
+            <div class="big card-surface">
+              <span class="big-label">Perfect days</span>
+              <span class="big-value">{perfectThisMonth}</span>
+              <span class="big-sub">
+                this month
+                {#if perfectStreak > 0}
+                  <span class="trend up">🔥 {perfectStreak}-day streak</span>
+                {/if}
+              </span>
+            </div>
+          </section>
+        {:else if section.id === 'insights'}
+          {#if insights.length > 0 || editMode}
+            <section class="block">
+              <h2 class="section-title">Insights</h2>
+              {#if insights.length > 0}
+                <div class="insights">
+                  {#each insights as i}
+                    <div class="insight card-surface">
+                      <span class="insight-icon" aria-hidden="true">💡</span>
+                      <p>{@html renderInsight(i.text)}</p>
+                    </div>
+                  {/each}
+                </div>
+              {:else}
+                <p class="muted small-empty">Not enough data yet for insights.</p>
+              {/if}
+            </section>
+          {/if}
+        {:else if section.id === 'annual'}
+          <section class="block">
+            <h2 class="section-title">Year at a glance</h2>
+            <div class="card-surface annual-card">
+              <div class="annual-scroll">
+                <div class="annual-months">
+                  {#each annualMonths as m (m.col + m.label)}
+                    <span class="annual-month" style="grid-column: {m.col + 2} / span 1">{m.label}</span>
+                  {/each}
+                </div>
+                <div class="annual-body">
+                  <div class="annual-day-labels">
+                    {#each annualDowLabels as l, i}
+                      <span class:hidden={i % 2 === 0}>{l}</span>
+                    {/each}
+                  </div>
+                  <div class="annual-grid" style="grid-template-columns: repeat({annualGrid.length}, 11px)">
+                    {#each annualGrid as col, ci}
+                      <div class="annual-col">
+                        {#each col as cell}
+                          <div
+                            class="annual-cell level-{cell.future ? 'future' : cell.level}"
+                            title={annualTooltip(cell)}
+                            aria-label={annualTooltip(cell)}
+                          ></div>
+                        {/each}
+                      </div>
+                    {/each}
+                  </div>
+                </div>
+              </div>
+              <div class="annual-legend">
+                <span>Less</span>
+                <div class="annual-cell level-0"></div>
+                <div class="annual-cell level-1"></div>
+                <div class="annual-cell level-2"></div>
+                <div class="annual-cell level-3"></div>
+                <div class="annual-cell level-4"></div>
+                <span>More</span>
+              </div>
+            </div>
+          </section>
+        {:else if section.id === 'weekly'}
+          <section class="block">
+            <h2 class="section-title">Check-ins per week — last 12 weeks</h2>
+            <div class="bars card-surface">
+              <div class="bars-row">
+                {#each weeklyBars as b}
+                  <div class="bar-col" title={`${b.label}: ${b.count} check-ins`}>
+                    <div class="bar" style="height: {(b.count / maxWeeklyBar) * 100}%"></div>
+                  </div>
                 {/each}
               </div>
-            {/each}
-          </div>
-        </div>
-      </div>
-      <div class="annual-legend">
-        <span>Less</span>
-        <div class="annual-cell level-0"></div>
-        <div class="annual-cell level-1"></div>
-        <div class="annual-cell level-2"></div>
-        <div class="annual-cell level-3"></div>
-        <div class="annual-cell level-4"></div>
-        <span>More</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- Weekly check-ins chart -->
-  <section class="block">
-    <h2 class="section-title">Check-ins per week — last 12 weeks</h2>
-    <div class="bars card-surface">
-      <div class="bars-row">
-        {#each weeklyBars as b}
-          <div class="bar-col" title={`${b.label}: ${b.count} check-ins`}>
-            <div class="bar" style="height: {(b.count / maxWeeklyBar) * 100}%"></div>
-          </div>
-        {/each}
-      </div>
-      <div class="bars-axis">
-        {#each weeklyBars as b, i}
-          <span class="bars-tick" class:hidden={i % 2 === 1}>{b.label}</span>
-        {/each}
-      </div>
-    </div>
-  </section>
-
-  <!-- Day of week breakdown -->
-  <section class="block">
-    <h2 class="section-title">By day of week — last 90 days</h2>
-    <div class="card-surface dow-card">
-      <div class="dow-row">
-        {#each dowOrdered as d}
-          <div class="dow-col" title={d.rate === null ? `${dowShort[d.day]} — no data` : `${dowShort[d.day]} — ${pct(d.rate)}`}>
-            <div class="dow-bar-wrap">
-              {#if d.rate !== null}
-                <div
-                  class="dow-bar"
-                  class:best={bestDay && d.day === bestDay.day}
-                  style="height: {(d.rate / dowMax) * 100}%"
-                ></div>
-              {/if}
+              <div class="bars-axis">
+                {#each weeklyBars as b, i}
+                  <span class="bars-tick" class:hidden={i % 2 === 1}>{b.label}</span>
+                {/each}
+              </div>
             </div>
-            <span class="dow-label">{dowShort[d.day]}</span>
-            <span class="dow-pct">{d.rate === null ? '—' : pct(d.rate)}</span>
-          </div>
-        {/each}
-      </div>
-    </div>
-  </section>
-
-  <!-- Leaderboard -->
-  <section class="block">
-    <h2 class="section-title">Top habits — last 30 days</h2>
-    <div class="lb card-surface">
-      {#each topThree as r, i (r.h.id)}
-        <div class="lb-row" style="--lb-accent: {r.h.color}">
-          <span class="lb-rank">{i + 1}</span>
-          <div class="lb-text">
-            <a class="lb-name" href={`#/habits/${r.h.id}`}>
-              {r.h.icon ? r.h.icon + ' ' : ''}{r.h.name}
-            </a>
-            <div class="lb-meta">{frequencyLabel(r.h)}</div>
-          </div>
-          <div class="lb-spark" aria-hidden="true">
-            {#each r.spark as v, j}
-              <span class="lb-spark-bar" style="height: {Math.max(8, (v / 7) * 100)}%; background: {r.h.color}"></span>
-            {/each}
-          </div>
-          <span class="lb-rate">{pct(r.rate)}</span>
-        </div>
-      {/each}
-    </div>
-
-    {#if needsAttention.length > 0}
-      <h2 class="section-title needs">Needs attention</h2>
-      <div class="lb card-surface lb-needs">
-        {#each needsAttention as r (r.h.id)}
-          <div class="lb-row" style="--lb-accent: {r.h.color}">
-            <span class="lb-warn" aria-hidden="true">⚠</span>
-            <div class="lb-text">
-              <a class="lb-name" href={`#/habits/${r.h.id}`}>
-                {r.h.icon ? r.h.icon + ' ' : ''}{r.h.name}
-              </a>
-              <div class="lb-meta">{frequencyLabel(r.h)}</div>
+          </section>
+        {:else if section.id === 'dow'}
+          <section class="block">
+            <h2 class="section-title">By day of week — last 90 days</h2>
+            <div class="card-surface dow-card">
+              <div class="dow-row">
+                {#each dowOrdered as d}
+                  <div class="dow-col" title={d.rate === null ? `${dowShort[d.day]} — no data` : `${dowShort[d.day]} — ${pct(d.rate)}`}>
+                    <div class="dow-bar-wrap">
+                      {#if d.rate !== null}
+                        <div
+                          class="dow-bar"
+                          class:best={bestDay && d.day === bestDay.day}
+                          style="height: {(d.rate / dowMax) * 100}%"
+                        ></div>
+                      {/if}
+                    </div>
+                    <span class="dow-label">{dowShort[d.day]}</span>
+                    <span class="dow-pct">{d.rate === null ? '—' : pct(d.rate)}</span>
+                  </div>
+                {/each}
+              </div>
             </div>
-            <div class="lb-spark" aria-hidden="true">
-              {#each r.spark as v}
-                <span class="lb-spark-bar" style="height: {Math.max(8, (v / 7) * 100)}%; background: {r.h.color}"></span>
+          </section>
+        {:else if section.id === 'leaderboard'}
+          <section class="block">
+            <h2 class="section-title">Top habits — last 30 days</h2>
+            <div class="lb card-surface">
+              {#each topThree as r, i (r.h.id)}
+                <div class="lb-row" style="--lb-accent: {r.h.color}">
+                  <span class="lb-rank">{i + 1}</span>
+                  <div class="lb-text">
+                    <a class="lb-name" href={`#/habits/${r.h.id}`}>
+                      {r.h.icon ? r.h.icon + ' ' : ''}{r.h.name}
+                    </a>
+                    <div class="lb-meta">{frequencyLabel(r.h)}</div>
+                  </div>
+                  <div class="lb-spark" aria-hidden="true">
+                    {#each r.spark as v, j}
+                      <span class="lb-spark-bar" style="height: {Math.max(8, (v / 7) * 100)}%; background: {r.h.color}"></span>
+                    {/each}
+                  </div>
+                  <span class="lb-rate">{pct(r.rate)}</span>
+                </div>
               {/each}
             </div>
-            <span class="lb-rate">{pct(r.rate)}</span>
-          </div>
-        {/each}
-      </div>
-    {/if}
-  </section>
 
-  <!-- Personal records -->
-  <section class="block">
-    <h2 class="section-title">Records</h2>
-    <div class="records card-surface">
-      <div class="record">
-        <span class="record-label">Longest perfect-day streak</span>
-        <span class="record-value">{records.longestPerfectStreak} <small>days</small></span>
-      </div>
-      <div class="record">
-        <span class="record-label">Most check-ins in a day</span>
-        <span class="record-value">{records.mostCheckinsInDay.count}</span>
-        {#if records.mostCheckinsInDay.date}
-          <span class="record-sub">{fmtRelative(records.mostCheckinsInDay.date)}</span>
+            {#if needsAttention.length > 0}
+              <h2 class="section-title needs">Needs attention</h2>
+              <div class="lb card-surface lb-needs">
+                {#each needsAttention as r (r.h.id)}
+                  <div class="lb-row" style="--lb-accent: {r.h.color}">
+                    <span class="lb-warn" aria-hidden="true">⚠</span>
+                    <div class="lb-text">
+                      <a class="lb-name" href={`#/habits/${r.h.id}`}>
+                        {r.h.icon ? r.h.icon + ' ' : ''}{r.h.name}
+                      </a>
+                      <div class="lb-meta">{frequencyLabel(r.h)}</div>
+                    </div>
+                    <div class="lb-spark" aria-hidden="true">
+                      {#each r.spark as v}
+                        <span class="lb-spark-bar" style="height: {Math.max(8, (v / 7) * 100)}%; background: {r.h.color}"></span>
+                      {/each}
+                    </div>
+                    <span class="lb-rate">{pct(r.rate)}</span>
+                  </div>
+                {/each}
+              </div>
+            {/if}
+          </section>
+        {:else if section.id === 'records'}
+          <section class="block">
+            <h2 class="section-title">Records</h2>
+            <div class="records card-surface">
+              <div class="record">
+                <span class="record-label">Longest perfect-day streak</span>
+                <span class="record-value">{records.longestPerfectStreak} <small>days</small></span>
+              </div>
+              <div class="record">
+                <span class="record-label">Most check-ins in a day</span>
+                <span class="record-value">{records.mostCheckinsInDay.count}</span>
+                {#if records.mostCheckinsInDay.date}
+                  <span class="record-sub">{fmtRelative(records.mostCheckinsInDay.date)}</span>
+                {/if}
+              </div>
+              <div class="record">
+                <span class="record-label">Most check-ins in a week</span>
+                <span class="record-value">{records.mostCheckinsInWeek.count}</span>
+                {#if records.mostCheckinsInWeek.wk}
+                  <span class="record-sub">week of {fmtRelative(records.mostCheckinsInWeek.wk)}</span>
+                {/if}
+              </div>
+              {#if records.longestHabitStreak.habit}
+                <div class="record">
+                  <span class="record-label">Longest single-habit streak</span>
+                  <span class="record-value">{records.longestHabitStreak.length}</span>
+                  <span class="record-sub">{records.longestHabitStreak.habit.name}</span>
+                </div>
+              {/if}
+              <div class="record">
+                <span class="record-label">Year to date</span>
+                <span class="record-value">{records.ytdTotal}</span>
+                <span class="record-sub">check-ins in {todayISO.slice(0, 4)}</span>
+              </div>
+            </div>
+          </section>
+        {:else if section.id === 'categories'}
+          <section class="block">
+            <h2 class="section-title">By category — last 30 days</h2>
+            <div class="cats">
+              {#each categoryStats as c (c.id)}
+                <div class="cat card-surface" style="--cat-color: {c.color}">
+                  <div class="cat-row">
+                    <span class="cat-dot"></span>
+                    <span class="cat-name">{c.name}</span>
+                    <span class="cat-meta">{c.habitCount} {c.habitCount === 1 ? 'habit' : 'habits'}</span>
+                    <span class="cat-pct">{pct(c.rate)}</span>
+                  </div>
+                  <div class="cat-bar">
+                    <div class="cat-fill" style="width: {c.rate * 100}%"></div>
+                  </div>
+                </div>
+              {/each}
+            </div>
+          </section>
         {/if}
       </div>
-      <div class="record">
-        <span class="record-label">Most check-ins in a week</span>
-        <span class="record-value">{records.mostCheckinsInWeek.count}</span>
-        {#if records.mostCheckinsInWeek.wk}
-          <span class="record-sub">week of {fmtRelative(records.mostCheckinsInWeek.wk)}</span>
-        {/if}
-      </div>
-      {#if records.longestHabitStreak.habit}
-        <div class="record">
-          <span class="record-label">Longest single-habit streak</span>
-          <span class="record-value">{records.longestHabitStreak.length}</span>
-          <span class="record-sub">{records.longestHabitStreak.habit.name}</span>
-        </div>
-      {/if}
-      <div class="record">
-        <span class="record-label">Year to date</span>
-        <span class="record-value">{records.ytdTotal}</span>
-        <span class="record-sub">check-ins in {todayISO.slice(0, 4)}</span>
-      </div>
-    </div>
-  </section>
-
-  <!-- By category -->
-  <section class="block">
-    <h2 class="section-title">By category — last 30 days</h2>
-    <div class="cats">
-      {#each categoryStats as c (c.id)}
-        <div class="cat card-surface" style="--cat-color: {c.color}">
-          <div class="cat-row">
-            <span class="cat-dot"></span>
-            <span class="cat-name">{c.name}</span>
-            <span class="cat-meta">{c.habitCount} {c.habitCount === 1 ? 'habit' : 'habits'}</span>
-            <span class="cat-pct">{pct(c.rate)}</span>
-          </div>
-          <div class="cat-bar">
-            <div class="cat-fill" style="width: {c.rate * 100}%"></div>
-          </div>
-        </div>
-      {/each}
-    </div>
-  </section>
+    {/each}
+  </div>
 {/if}
 
 <style>
   .header {
     padding: 24px 16px 12px;
+    display: flex;
+    align-items: flex-start;
+    justify-content: space-between;
+    gap: 12px;
   }
 
   .header h1 {
@@ -484,6 +600,114 @@
 
   .header p {
     margin: 4px 0 0;
+  }
+
+  .edit-toggle {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 8px 14px;
+    border-radius: 999px;
+    border: 1px solid var(--border);
+    background: var(--bg-elevated);
+    color: var(--fg);
+    font-weight: 600;
+    font-size: 13px;
+    min-height: 36px;
+    flex-shrink: 0;
+  }
+
+  .edit-toggle.active {
+    background: var(--accent);
+    color: var(--accent-fg);
+    border-color: transparent;
+  }
+
+  .edit-banner {
+    margin: 0 16px 12px;
+    padding: 10px 14px;
+    background: color-mix(in srgb, var(--accent) 12%, transparent);
+    border: 1px solid color-mix(in srgb, var(--accent) 30%, transparent);
+    border-radius: var(--radius-sm);
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    font-size: 13px;
+    color: var(--fg);
+  }
+
+  .edit-banner .grip {
+    display: inline-block;
+    color: var(--fg-muted);
+    font-weight: 700;
+    margin: 0 2px;
+  }
+
+  .btn-link {
+    background: none;
+    border: none;
+    color: var(--accent);
+    font-weight: 600;
+    font-size: 13px;
+    padding: 4px 8px;
+    cursor: pointer;
+  }
+
+  .btn-link:active {
+    opacity: 0.6;
+  }
+
+  .stats-zone {
+    display: flex;
+    flex-direction: column;
+  }
+
+  .stats-zone.editing :global(.stats-section) {
+    margin: 4px 12px;
+    padding: 8px 4px 4px;
+    border: 2px dashed color-mix(in srgb, var(--accent) 40%, transparent);
+    border-radius: var(--radius);
+    background: color-mix(in srgb, var(--accent) 4%, transparent);
+    cursor: grab;
+    touch-action: none;
+  }
+
+  .stats-zone.editing :global(.stats-section:active) {
+    cursor: grabbing;
+  }
+
+  .stats-zone.editing :global(.stats-section a),
+  .stats-zone.editing :global(.stats-section button:not(.drag-handle)) {
+    pointer-events: none;
+  }
+
+  .drag-handle {
+    display: flex;
+    align-items: center;
+    gap: 8px;
+    padding: 4px 12px 8px;
+    color: var(--fg-muted);
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.04em;
+  }
+
+  .grip {
+    display: inline-flex;
+    align-items: center;
+    justify-content: center;
+    color: var(--accent);
+    font-size: 16px;
+    font-weight: 700;
+    line-height: 1;
+    letter-spacing: -2px;
+  }
+
+  .small-empty {
+    padding: 12px 16px;
+    margin: 0;
+    font-size: 13px;
   }
 
   .empty {

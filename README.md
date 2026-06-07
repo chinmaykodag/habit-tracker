@@ -20,8 +20,15 @@ on your device in LocalStorage.
   habits under 70%; personal records (longest perfect-day streak,
   biggest day/week, longest single-habit streak, year-to-date totals);
   per-category 30-day rate
+- **Drag to reorder stats** — tap "Edit" in the top-right of the Stats
+  page, then drag the ⋮⋮ handles to reorder sections; "Reset to default"
+  restores the original layout. Order persists across reloads and is
+  included in the JSON export
 - **Light / dark / system** theme (follows iOS system preference by default)
-- **Export / import** all data as JSON (back up or move between devices)
+- **Export** — full backup as JSON (all habits, history, categories,
+  settings, layout); habit history as CSV (one row per check-in, opens
+  cleanly in Excel/Sheets)
+- **Import** from JSON with merge-or-replace
 - **PWA** — installable on iPhone home screen, fully offline after first load
 
 ## Running locally

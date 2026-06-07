@@ -1,5 +1,20 @@
 const STORAGE_KEY = 'habit-tracker:v1';
 
+// Canonical default ordering for the Stats page. Add new section ids to
+// the end — user-saved orders that don't include a new id will get that
+// id appended at render time (forward compat). Removed ids are filtered
+// out gracefully.
+export const DEFAULT_STATS_ORDER = [
+  'hero',
+  'insights',
+  'annual',
+  'weekly',
+  'dow',
+  'leaderboard',
+  'records',
+  'categories',
+];
+
 export const DEFAULT_STATE = {
   version: 1,
   habits: [],
@@ -8,6 +23,7 @@ export const DEFAULT_STATE = {
   settings: {
     theme: 'system',
     weekStartsOn: 1, // 0 = Sunday, 1 = Monday
+    statsOrder: [...DEFAULT_STATS_ORDER],
   },
 };
 

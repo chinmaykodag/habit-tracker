@@ -2,6 +2,8 @@
   import { state } from '../lib/stores.js';
   import { DEFAULT_STATE } from '../lib/storage.js';
   import { today } from '../lib/date.js';
+  import { toCSV } from '../lib/csv.js';
+  import { frequencyLabel } from '../lib/habits.js';
 
   let fileInput;
   let importMessage = '';
@@ -17,17 +19,56 @@
     }));
   }
 
-  function exportData() {
-    const data = JSON.stringify($state, null, 2);
-    const blob = new Blob([data], { type: 'application/json' });
+  function download(filename, content, mime) {
+    const blob = new Blob([content], { type: mime });
     const url = URL.createObjectURL(blob);
     const a = document.createElement('a');
     a.href = url;
-    a.download = `habit-tracker-export-${today()}.json`;
+    a.download = filename;
     document.body.appendChild(a);
     a.click();
     document.body.removeChild(a);
     URL.revokeObjectURL(url);
+  }
+
+  function exportJson() {
+    download(
+      `habit-tracker-export-${today()}.json`,
+      JSON.stringify($state, null, 2),
+      'application/json'
+    );
+  }
+
+  function exportCsv() {
+    const s = $state;
+    const catById = new Map((s.categories ?? []).map((c) => [c.id, c.name]));
+
+    const rows = [
+      ['date', 'habit_id', 'habit_name', 'category', 'frequency', 'color'],
+    ];
+
+    // One row per check-in, sorted by date then habit name for stable output
+    const entries = [];
+    for (const h of s.habits) {
+      const cat = h.categoryId ? catById.get(h.categoryId) ?? '' : '';
+      const freq = frequencyLabel(h);
+      for (const d of s.completions[h.id] ?? []) {
+        entries.push({ date: d, h, cat, freq });
+      }
+    }
+    entries.sort((a, b) =>
+      a.date === b.date ? a.h.name.localeCompare(b.h.name) : a.date.localeCompare(b.date)
+    );
+    for (const e of entries) {
+      rows.push([e.date, e.h.id, e.h.name, e.cat, e.freq, e.h.color ?? '']);
+    }
+
+    // Add BOM so Excel opens UTF-8 correctly
+    download(
+      `habit-tracker-history-${today()}.csv`,
+      '\uFEFF' + toCSV(rows) + '\r\n',
+      'text/csv;charset=utf-8'
+    );
   }
 
   function handleImport(e) {
@@ -140,7 +181,8 @@
     </div>
   </div>
   <div class="actions">
-    <button class="btn btn-primary btn-full" on:click={exportData}>Export as JSON</button>
+    <button class="btn btn-primary btn-full" on:click={exportJson}>Export as JSON</button>
+    <button class="btn btn-full" on:click={exportCsv}>Export history as CSV</button>
     <label class="btn btn-full">
       Import from JSON
       <input
