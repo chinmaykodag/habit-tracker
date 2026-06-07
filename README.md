@@ -12,8 +12,14 @@ on your device in LocalStorage.
 - **Streaks** — current and longest, computed per frequency
 - **GitHub-style heatmap** for each habit (last 6 months, scrolled to today)
 - **Categories** with color labels
-- **Stats** — overall completion rate, best day of the week, weekly check-ins
-  chart, breakdown by category
+- **Stats** — 30-day completion rate with **trend arrow** vs prior 30d;
+  perfect days this month + current perfect-day streak; smart insights
+  (auto-generated highlights based on your data); whole-tracker annual
+  heatmap; weekly check-ins chart; day-of-week breakdown; top-3 habit
+  leaderboard with weekly sparklines; "needs attention" alerts for
+  habits under 70%; personal records (longest perfect-day streak,
+  biggest day/week, longest single-habit streak, year-to-date totals);
+  per-category 30-day rate
 - **Light / dark / system** theme (follows iOS system preference by default)
 - **Export / import** all data as JSON (back up or move between devices)
 - **PWA** — installable on iPhone home screen, fully offline after first load
