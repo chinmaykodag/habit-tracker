@@ -54,17 +54,49 @@ npm run generate:icons
 
 ## Installing as an iOS PWA
 
-1. Deploy `dist/` to any static host with HTTPS (Vercel, Netlify, Cloudflare
-   Pages, GitHub Pages, etc.). iOS Safari **requires HTTPS** to install a PWA.
-2. Open the deployed URL in **Safari** on your iPhone (not Chrome).
-3. Tap the share icon → **Add to Home Screen**.
-4. Launch from the home-screen icon — it opens full-screen, no Safari chrome,
+The app is deployed to GitHub Pages at:
+
+**https://chinmaykodag.github.io/habit-tracker/**
+
+1. Open the URL in **Safari** on your iPhone (not Chrome — iOS only allows
+   PWA install from Safari).
+2. Tap the share icon → **Add to Home Screen**.
+3. Launch from the home-screen icon — it opens full-screen, no Safari chrome,
    works offline.
+
+## Deploying
+
+A GitHub Actions workflow (`.github/workflows/deploy.yml`) builds and deploys
+to GitHub Pages on every push to `main`.
+
+**One-time setup** (after creating the repo on GitHub):
+
+1. Create the empty repo on GitHub (no README/license/.gitignore — they
+   already exist locally).
+2. Push: `git push -u origin main` (remote is already configured to
+   `https://github.com/chinmaykodag/habit-tracker.git`).
+3. The workflow runs automatically. The `actions/configure-pages` step
+   auto-enables Pages with "GitHub Actions" as the source on first
+   run, so no manual settings toggle is needed.
+4. Watch progress in the **Actions** tab. After ~1 minute the site goes
+   live at `https://chinmaykodag.github.io/habit-tracker/`.
+
+**Forking / deploying under a different repo name**
+
+The production base path is set once in `vite.config.js`:
+
+```js
+const PROD_BASE = '/habit-tracker/';
+```
+
+Change it to match your repo name (e.g. `'/my-habit-tracker/'`) and push.
+For a user/org root site (`<username>.github.io`), use `'/'`.
 
 ## Tech
 
-- **Svelte 4 + Vite 5** — small bundle (~26 KB JS gzipped)
+- **Svelte 4 + Vite 5** — small bundle (~49 KB JS gzipped)
 - **vite-plugin-pwa** — auto-generates service worker and web app manifest
+- **svelte-dnd-action** — touch-friendly drag-and-drop for the Stats layout
 - **LocalStorage** — schema-versioned, supports decades of habit history for
   any reasonable number of habits
 - No backend, no accounts, no tracking
