@@ -160,6 +160,11 @@
     };
   }
 
+  function resetHistory() {
+    if (!confirm(`Clear all ${completionCount} check-ins? Your habits and categories will be kept, but every completion date will be erased. This cannot be undone.`)) return;
+    state.update((s) => ({ ...s, completions: {} }));
+  }
+
   function reset() {
     if (!confirm('Erase ALL habits and history? This cannot be undone.')) return;
     if (!confirm('Are you absolutely sure? This will delete everything.')) return;
@@ -256,7 +261,12 @@
 
 <section class="block">
   <h2 class="section-title">Danger zone</h2>
+  <button class="btn btn-full" on:click={resetHistory} style="border-color: var(--warning); color: var(--warning);">
+    Clear history only
+  </button>
+  <span class="hint">Erases all check-ins. Habits, categories and settings are kept.</span>
   <button class="btn btn-danger btn-full" on:click={reset}>Reset all data</button>
+  <span class="hint">Erases everything — habits, history, categories and settings.</span>
 </section>
 
 <section class="block about">
