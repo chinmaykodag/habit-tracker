@@ -28,7 +28,13 @@
     if (password.length < 6) { setMsg('Password must be at least 6 characters.', true); return; }
     loading = true;
     setMsg('');
-    const { error } = await supabase.auth.signUp({ email, password });
+    const { error } = await supabase.auth.signUp({
+      email,
+      password,
+      options: {
+        emailRedirectTo: window.location.origin + window.location.pathname,
+      },
+    });
     loading = false;
     if (error) setMsg(error.message, true);
     else setMsg('Check your email for a confirmation link, then sign in.');
