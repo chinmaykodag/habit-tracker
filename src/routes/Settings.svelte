@@ -1,5 +1,6 @@
 <script>
-  import { state } from '../lib/stores.js';
+  import { state, authUser, signOut } from '../lib/stores.js';
+  import { supabaseEnabled } from '../lib/supabase.js';
   import { DEFAULT_STATE } from '../lib/storage.js';
   import { today } from '../lib/date.js';
   import { toCSV } from '../lib/csv.js';
@@ -181,6 +182,19 @@
 <header class="header">
   <h1>Settings</h1>
 </header>
+
+{#if supabaseEnabled && $authUser}
+  <section class="block">
+    <h2 class="section-title">Account</h2>
+    <div class="card-surface account-row">
+      <div>
+        <span class="label">Signed in as</span>
+        <span class="account-email">{$authUser.email}</span>
+      </div>
+      <button class="btn btn-ghost" on:click={signOut}>Sign out</button>
+    </div>
+  </section>
+{/if}
 
 <section class="block">
   <h2 class="section-title">Appearance</h2>
@@ -445,5 +459,23 @@
   .about {
     text-align: center;
     margin-top: 12px;
+  }
+
+  .account-row {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 12px 14px;
+    gap: 12px;
+  }
+
+  .account-email {
+    font-size: 14px;
+    font-weight: 600;
+    display: block;
+    margin-top: 2px;
+    overflow: hidden;
+    text-overflow: ellipsis;
+    white-space: nowrap;
   }
 </style>

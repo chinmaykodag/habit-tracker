@@ -1,13 +1,15 @@
 <script>
   import { onMount, onDestroy, tick } from 'svelte';
   import { get } from 'svelte/store';
-  import { state, route } from './lib/stores.js';
+  import { state, route, authUser, authLoading, syncStatus, initAuth } from './lib/stores.js';
+  import { supabaseEnabled } from './lib/supabase.js';
   import BottomNav from './components/BottomNav.svelte';
   import Today from './routes/Today.svelte';
   import Habits from './routes/Habits.svelte';
   import HabitDetail from './routes/HabitDetail.svelte';
   import Stats from './routes/Stats.svelte';
   import Settings from './routes/Settings.svelte';
+  import Auth from './routes/Auth.svelte';
 
   function applyTheme(setting) {
     if (typeof document === 'undefined') return;
@@ -61,6 +63,7 @@
     if (typeof window === 'undefined') return;
     mediaQuery = window.matchMedia('(prefers-color-scheme: dark)');
     mediaQuery.addEventListener?.('change', handleSystemChange);
+    initAuth();
   });
 
   onDestroy(() => {
@@ -71,27 +74,60 @@
   $: detailId = page === 'habits' ? $route.parts[1] : undefined;
 </script>
 
-<main class="app">
-  {#if page === 'today'}
-    <Today />
-  {:else if page === 'habits' && detailId}
-    {#key detailId}
-      <HabitDetail id={detailId} />
-    {/key}
-  {:else if page === 'habits'}
-    <Habits />
-  {:else if page === 'stats'}
-    <Stats />
-  {:else if page === 'settings'}
-    <Settings />
-  {:else}
-    <Today />
-  {/if}
-</main>
+{#if $authLoading}
+  <div class="splash">
+    <span class="splash-icon" aria-hidden="true">🗓️</span>
+    <p>Loading…</p>
+  </div>
+{:else if supabaseEnabled && !$authUser}
+  <Auth />
+{:else}
+  <main class="app">
+    {#if page === 'today'}
+      <Today />
+    {:else if page === 'habits' && detailId}
+      {#key detailId}
+        <HabitDetail id={detailId} />
+      {/key}
+    {:else if page === 'habits'}
+      <Habits />
+    {:else if page === 'stats'}
+      <Stats />
+    {:else if page === 'settings'}
+      <Settings />
+    {:else}
+      <Today />
+    {/if}
+  </main>
 
-<BottomNav active={page} />
+  <BottomNav active={page} />
+
+  {#if $syncStatus === 'error'}
+    <div class="sync-banner">⚠️ Sync error — changes saved locally, will retry.</div>
+  {/if}
+{/if}
 
 <style>
+  .splash {
+    min-height: 100dvh;
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    gap: 12px;
+    color: var(--fg-muted);
+    font-size: 14px;
+  }
+
+  .splash-icon {
+    font-size: 48px;
+    line-height: 1;
+  }
+
+  .splash p {
+    margin: 0;
+  }
+
   .app {
     min-height: 100dvh;
     padding-top: env(safe-area-inset-top);
@@ -100,5 +136,19 @@
     padding-right: env(safe-area-inset-right);
     max-width: 720px;
     margin: 0 auto;
+  }
+
+  .sync-banner {
+    position: fixed;
+    bottom: var(--bottom-nav-height);
+    left: 0;
+    right: 0;
+    background: color-mix(in srgb, var(--warning) 15%, var(--bg-elevated));
+    color: var(--fg);
+    font-size: 12px;
+    font-weight: 600;
+    text-align: center;
+    padding: 8px 16px;
+    z-index: 50;
   }
 </style>
