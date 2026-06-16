@@ -9,9 +9,15 @@ on your device in LocalStorage.
 - **Habits with frequency** — daily, specific weekdays (e.g. M/W/F), or X
   times per week
 - **Tap-to-toggle** check-ins from the Today view
+- **Retroactive logging** — date navigator on the Today view (prev/next
+  day arrows plus a native date picker) so you can fill in yesterday or
+  any past day you forgot. Habits archived or created after the selected
+  date are hidden so you only see what actually existed that day.
 - **Streaks** — current and longest, computed per frequency
 - **GitHub-style heatmap** for each habit (last 6 months, scrolled to today)
-- **Categories** with color labels
+- **Categories** with color labels — create, rename, recolor and delete
+  from **Settings → Categories**. Deleting a category keeps the habits
+  themselves but moves them to "Uncategorized".
 - **Stats** — 30-day completion rate with **trend arrow** vs prior 30d;
   perfect days this month + current perfect-day streak; smart insights
   (auto-generated highlights based on your data); whole-tracker annual
@@ -134,6 +140,7 @@ src/
     HabitForm.svelte
     Heatmap.svelte
     CategoryPicker.svelte
+    CategoryManager.svelte
     Modal.svelte
   routes/
     Today.svelte

@@ -4,6 +4,7 @@
   import { today } from '../lib/date.js';
   import { toCSV } from '../lib/csv.js';
   import { frequencyLabel } from '../lib/habits.js';
+  import CategoryManager from '../components/CategoryManager.svelte';
 
   let fileInput;
   let importMessage = '';
@@ -215,6 +216,11 @@
       <button class="seg-btn" class:active={$state.settings.weekStartsOn === 1} on:click={() => setWeekStart(1)}>Monday</button>
     </div>
   </div>
+</section>
+
+<section class="block">
+  <h2 class="section-title">Categories</h2>
+  <CategoryManager />
 </section>
 
 <section class="block">
